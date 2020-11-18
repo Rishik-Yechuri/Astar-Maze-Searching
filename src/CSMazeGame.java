@@ -1,3 +1,6 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.image.BufferStrategy;
 import java.io.*;
 import java.util.Arrays;
 import java.util.Stack;
@@ -7,6 +10,13 @@ public class CSMazeGame {
     static Coord currentMove;
     static Stack visitStack;
     static boolean searchingDone = false;
+
+    //Visual side of things being declared
+    static JFrame frame;
+    static Canvas canvas;
+    static BufferStrategy bufferStrategy;
+    static Graphics2D g;
+
     public static void main(String[] args) throws IOException, InterruptedException {
         long startTime;
         long currentTime;
@@ -15,8 +25,8 @@ public class CSMazeGame {
         startTime = System.currentTimeMillis();
         while (!searchingDone) {
             currentTime = System.currentTimeMillis();
-            long timePassed = currentTime-startTime;
-            if(timePassed>=1000){
+            long timePassed = currentTime - startTime;
+            if (timePassed >= 1000) {
                 updateMaze();
                 updateFrontEnd();
                 if (/*All options have been explored or Maze has been completed*/
@@ -34,37 +44,55 @@ public class CSMazeGame {
     public static void initializeMaze() throws IOException {
         File file = new File("Maze1");
         BufferedReader br = new BufferedReader(new FileReader(file));
-       for(int y=0;y<20;y++){
-           for(int x=0;x<20;x++){
-               maze[y][x] = br.read()-48;
-               if(maze[y][x] == -38 ){
-                   maze[y][x] = br.read()-48;
-               }
-           }
-       }
-       for(int y =0;y<20;y++){
-           if(maze[y][19] == 0){
-               maze[y][19] = -1;
-               currentMove = new Coord(y,19);
-           }
-       }
-       visitStack = new Stack();
-       visitStack.push(currentMove);
-       //currentMove = new Coord();
+        for (int y = 0; y < 20; y++) {
+            for (int x = 0; x < 20; x++) {
+                maze[y][x] = br.read() - 48;
+                if (maze[y][x] == -38) {
+                    maze[y][x] = br.read() - 48;
+                }
+            }
+        }
+        for (int y = 0; y < 20; y++) {
+            if (maze[y][19] == 0) {
+                maze[y][19] = -1;
+                currentMove = new Coord(y, 19);
+            }
+        }
+        visitStack = new Stack();
+        visitStack.push(currentMove);
+        //Initialize front end
+        frame = new JFrame("Car Shooters");
+        JPanel panel = (JPanel) frame.getContentPane();
+        panel.setPreferredSize(new Dimension(1000, 1000));
+        panel.setLayout(null);
+        canvas = new Canvas();
+        //put a boundry to the square
+        canvas.setBounds(0, 0, 1000, 1000);
+        canvas.setIgnoreRepaint(true);
+        panel.add(canvas);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.pack();
+        frame.setResizable(false);
+        frame.setVisible(true);
+        canvas.createBufferStrategy(1);
+        bufferStrategy = canvas.getBufferStrategy();
+        canvas.requestFocus();
+        g = (Graphics2D) bufferStrategy.getDrawGraphics();
     }
 
     public static void updateMaze() throws InterruptedException {
         //boolean keepGoingBack = true;
         maze[currentMove.rPos][currentMove.cPos] = -2;
-        if(currentMove.isFree()){
+        if (currentMove.isFree()) {
             searchingDone = true;
-        }else if(!getMove()){
+        } else if (!getMove()) {
             goBackAlgorithim();
-        }else{
+        } else {
             currentMove = new Coord(currentMove.rPos, currentMove.cPos);
             visitStack.push(currentMove);
         }
     }
+
     public static void goBackAlgorithim() throws InterruptedException {
         //Do things that make it go back
         boolean keepGoingBack = true;
@@ -89,6 +117,7 @@ public class CSMazeGame {
         }
         updateFrontEnd();
     }
+
     static boolean getMove()
     // This method checks eight possible positions in a counter-clock wise manner
     // starting with the (-1,0) position.  If a position is found the method returns
@@ -115,6 +144,7 @@ public class CSMazeGame {
         }
         return false;
     }
+
     private static boolean inBounds(int r, int c)
     // This method determines if a coordinate position is inbounds or not
     {
@@ -123,6 +153,14 @@ public class CSMazeGame {
         }
         return false;
     }
+
     public static void updateFrontEnd() {
+        for(int y=0;y<20;y++){
+            for(int x=0;x<20;x++){
+                if(maze[y][x] == 1){
+                    g.fillRect(x*50,y*50,50,50);
+                }
+            }
+        }
     }
 }
