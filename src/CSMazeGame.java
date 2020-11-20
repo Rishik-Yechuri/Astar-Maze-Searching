@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.Stack;
 
 public class CSMazeGame {
+    static Coord previousMove;
     static int[][] maze = new int[20][20];
     static Coord currentMove;
     static Stack visitStack;
@@ -83,6 +84,9 @@ public class CSMazeGame {
     public static void updateMaze() throws InterruptedException {
         //boolean keepGoingBack = true;
         maze[currentMove.rPos][currentMove.cPos] = -2;
+        if (previousMove != null) {
+            maze[previousMove.rPos][previousMove.cPos] = -2;
+        }
         if (currentMove.isFree()) {
             searchingDone = true;
         } else if (!getMove()) {
@@ -91,6 +95,8 @@ public class CSMazeGame {
             currentMove = new Coord(currentMove.rPos, currentMove.cPos);
             visitStack.push(currentMove);
         }
+        maze[currentMove.rPos][currentMove.cPos] = -1;
+        previousMove = currentMove;
     }
 
     public static void goBackAlgorithim() throws InterruptedException {
@@ -155,11 +161,22 @@ public class CSMazeGame {
     }
 
     public static void updateFrontEnd() {
-        for(int y=0;y<20;y++){
-            for(int x=0;x<20;x++){
-                if(maze[y][x] == 1){
-                    g.fillRect(x*50,y*50,50,50);
+        for (int y = 0; y < 20; y++) {
+            for (int x = 0; x < 20; x++) {
+                int mazeValue = maze[y][x];
+                Color color = new Color(0, 0, 0);
+                if (mazeValue == 1) {
+                    color = new Color(0, 0, 0);
+                } else if (mazeValue == 0) {
+                    color = new Color(255, 255, 255);
+                } else if (mazeValue == -1) {
+                    color = new Color(20, 20, 220);
+                } else if (mazeValue == -2) {
+                    color = new Color(190, 150, 30);
                 }
+                g.setColor(color);
+                g.fillRect(x * 50, y * 50, 50, 50);
+
             }
         }
     }
