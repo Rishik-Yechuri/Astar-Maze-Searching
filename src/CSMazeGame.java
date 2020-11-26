@@ -46,7 +46,7 @@ public class CSMazeGame {
     //-2 represents blocks visited by the player
     //Future block like helped blocks or harmful blocks will use the same scheme
     public static void initializeMaze() throws IOException {
-        File file = new File("Maze1");
+        File file = new File("Maze2");
         BufferedReader br = new BufferedReader(new FileReader(file));
         for (int y = 0; y < 20; y++) {
             for (int x = 0; x < 20; x++) {
@@ -217,6 +217,7 @@ public class CSMazeGame {
             }
             a++;
         }
+        maze[realCurrentMove.rPos][realCurrentMove.cPos] = -2;
         return false;
     }
 
