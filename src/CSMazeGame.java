@@ -12,6 +12,8 @@ public class CSMazeGame {
     static Coord currentMove;
     static Stack visitStack;
     static boolean searchingDone = false;
+    static int timesToGo = 0;
+    static int directionToGo = 0;
     HashMap<Coord, Integer> obstacleLocations = new HashMap<Coord, Integer>();
     //Visual side of things being declared
     static JFrame frame;
@@ -84,48 +86,56 @@ public class CSMazeGame {
 
     public static void updateMaze() throws InterruptedException {
         //boolean keepGoingBack = true;
-        maze[currentMove.rPos][currentMove.cPos] = -2;
+        int oldPos = maze[currentMove.rPos][currentMove.cPos];
+        Coord oldCoord = new Coord(currentMove.rPos, currentMove.cPos);
+        //maze[currentMove.rPos][currentMove.cPos] = -2;
+        //previousMove = currentMove;
         if (previousMove != null) {
             maze[previousMove.rPos][previousMove.cPos] = -2;
         }
         if (currentMove.isFree()) {
             searchingDone = true;
-        } else if (!getMove()) {
+        } else if (!getMove(oldPos, oldCoord, true)) {
             goBackAlgorithim();
         } else {
+            // maze[currentMove.rPos][currentMove.cPos] = -2;
             currentMove = new Coord(currentMove.rPos, currentMove.cPos);
-            visitStack.push(currentMove);
+            visitStack.push(new Coord(currentMove.rPos,currentMove.cPos));
         }
-        maze[currentMove.rPos][currentMove.cPos] = -1;
-        previousMove = currentMove;
+        maze[oldCoord.rPos][oldCoord.cPos] = -2;
+        //maze[currentMove.rPos][currentMove.cPos] = -1;
     }
 
     public static void goBackAlgorithim() throws InterruptedException {
         //Do things that make it go back
         boolean keepGoingBack = true;
+        Coord oldLoc = currentMove;
+        int oldValue = maze[currentMove.rPos][currentMove.cPos];
         while (keepGoingBack) {
-            Thread.sleep(950);
             if (!visitStack.isEmpty()) {
                 visitStack.pop();
                 if (!visitStack.isEmpty()) {
                     currentMove = (Coord) visitStack.peek();
+                    // maze[currentMove.rPos][currentMove.cPos] = -2;
                 }
             } else {
                 searchingDone = true;
                 keepGoingBack = false;
             }
-            if (getMove()) {
+            if (getMove(maze[currentMove.rPos][currentMove.cPos], currentMove, false)) {
                 keepGoingBack = false;
             }
             updateFrontEnd();
+            Thread.sleep(950);
         }
-        if (!visitStack.isEmpty()) {
+        /*if (!visitStack.isEmpty()) {
             currentMove = (Coord) visitStack.peek();
-        }
+        }*/
+        Thread.sleep(950);
         updateFrontEnd();
     }
 
-    static boolean getMove()
+    static boolean getMove(int valueOfSpot, Coord realCurrentMove, boolean takeAction)
     // This method checks eight possible positions in a counter-clock wise manner
     // starting with the (-1,0) position.  If a position is found the method returns
     // true and the currentMove coordinates are altered to the new position
@@ -136,11 +146,17 @@ public class CSMazeGame {
         boolean keepLoopRunning = true;
         boolean foundSomething = false;
         int currentValue = 0;
-        if(inBounds(currentMove.rPos,currentMove.cPos)){
-            currentValue = maze[currentMove.rPos][currentMove.cPos];
+        if (inBounds(realCurrentMove.rPos, realCurrentMove.cPos)) {
+            currentValue = /*valueOfSpot;*/maze[currentMove.rPos][currentMove.cPos];
         }
-        if(currentValue > 1){
-            keepLoopRunning = false;
+        if (currentValue > 1 || timesToGo > 0) {
+            //keepLoopRunning = false;
+            if(timesToGo == 0){
+                timesToGo = 2;
+                directionToGo = currentValue;
+            }else{
+                currentValue = directionToGo;
+            }
             if (currentValue > 1 && currentValue < 6) {
                 switch (currentValue) {
                     case 2:
@@ -157,8 +173,8 @@ public class CSMazeGame {
                         break;
                 }
             }
-            if(currentValue > 5 ){
-                switch (currentValue){
+            if (currentValue > 5) {
+                switch (currentValue) {
                     case 6:
                         rMovement = -1;
                         break;
@@ -173,18 +189,27 @@ public class CSMazeGame {
                         break;
                 }
             }
+            timesToGo--;
+            currentMove.rPos += rMovement;
+            currentMove.cPos += cMovement;
+            return true;
         }
         int[][] holdPossibleMoves = new int[][]{{-1, 0}, {-1, -1}, {0, -1}, {1, -1}, {1, 0}, {1, 1}, {0, 1}, {-1, 1}};
+
         while (keepLoopRunning) {
+            //if(takeAction) {
             rMovement = holdPossibleMoves[a][0];
             cMovement = holdPossibleMoves[a][1];
+            //}
             int spaceValue = 1;
             if (inBounds(currentMove.rPos + rMovement, currentMove.cPos + cMovement)) {
                 spaceValue = maze[currentMove.rPos + rMovement][currentMove.cPos + cMovement];
             }
             if (inBounds(currentMove.rPos + rMovement, currentMove.cPos + cMovement) && spaceValue != 1 && spaceValue > -1) {
-                currentMove.rPos += rMovement;
-                currentMove.cPos += cMovement;
+                if (takeAction) {
+                    currentMove.rPos += rMovement;
+                    currentMove.cPos += cMovement;
+                }
                 return true;
             }
             if (a >= 7) {
@@ -217,10 +242,10 @@ public class CSMazeGame {
                     color = new Color(20, 20, 220);
                 } */ else if (mazeValue == -2) {
                     color = new Color(190, 150, 30);
-                }else if(mazeValue > 1 && mazeValue < 6){
-                    color = new Color(15,200,20);
-                }else if(mazeValue > 5 ){
-                    color = new Color(200,15,20);
+                } else if (mazeValue > 1 && mazeValue < 6) {
+                    color = new Color(15, 200, 20);
+                } else if (mazeValue > 5) {
+                    color = new Color(200, 15, 20);
                 }
                 if (y == currentMove.rPos && x == currentMove.cPos) {
                     color = new Color(20, 20, 220);
