@@ -25,19 +25,27 @@ public class CSMazeGame {
         long startTime;
         long currentTime;
         //boolean mazeCompleted = false;
-        initializeMaze();
-        startTime = System.currentTimeMillis();
-        while (!searchingDone) {
-            currentTime = System.currentTimeMillis();
-            long timePassed = currentTime - startTime;
-            if (timePassed >= 1000) {
-                updateMaze();
-                updateFrontEnd();
-                if (/*All options have been explored or Maze has been completed*/
-                        false) {
-                    searchingDone = true;
+        for(int x=1;x<=3;x++){
+            initializeMaze(x);
+            startTime = System.currentTimeMillis();
+            while (!searchingDone) {
+                currentTime = System.currentTimeMillis();
+                long timePassed = currentTime - startTime;
+                if (timePassed >= 1000) {
+                    updateMaze();
+                    updateFrontEnd();
+                    if (/*All options have been explored or Maze has been completed*/
+                            false) {
+                        searchingDone = true;
+                    }
+                    startTime = currentTime;
                 }
-                startTime = currentTime;
+            }
+            searchingDone = false;
+            if(x==3){
+                g.clearRect(0,0,1000,1000);
+                g.setFont(new Font("TimesRoman", Font.PLAIN, 34));
+                g.drawString("Mazes Completed",350,450);
             }
         }
     }
@@ -45,8 +53,9 @@ public class CSMazeGame {
     //0 represents an empty space,1 represents a wall,and -1 represents the player
     //-2 represents blocks visited by the player
     //Future block like helped blocks or harmful blocks will use the same scheme
-    public static void initializeMaze() throws IOException {
-        File file = new File("Maze3");
+    public static void initializeMaze(int mazeNum) throws IOException {
+        File file;
+        file = mazeNum == 1 ? new File("Maze1") : mazeNum == 2? new File("Maze2"): new File("Maze3");
         BufferedReader br = new BufferedReader(new FileReader(file));
         for (int y = 0; y < 20; y++) {
             for (int x = 0; x < 20; x++) {
@@ -65,23 +74,25 @@ public class CSMazeGame {
         visitStack = new Stack();
         visitStack.push(currentMove);
         //Initialize front end
-        frame = new JFrame("Car Shooters");
-        JPanel panel = (JPanel) frame.getContentPane();
-        panel.setPreferredSize(new Dimension(1000, 1000));
-        panel.setLayout(null);
-        canvas = new Canvas();
-        //put a boundry to the square
-        canvas.setBounds(0, 0, 1000, 1000);
-        canvas.setIgnoreRepaint(true);
-        panel.add(canvas);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.pack();
-        frame.setResizable(false);
-        frame.setVisible(true);
-        canvas.createBufferStrategy(1);
-        bufferStrategy = canvas.getBufferStrategy();
-        canvas.requestFocus();
-        g = (Graphics2D) bufferStrategy.getDrawGraphics();
+        if(frame == null) {
+            frame = new JFrame("Maze Path Finder");
+            JPanel panel = (JPanel) frame.getContentPane();
+            panel.setPreferredSize(new Dimension(1000, 1000));
+            panel.setLayout(null);
+            canvas = new Canvas();
+            //put a boundry to the square
+            canvas.setBounds(0, 0, 1000, 1000);
+            canvas.setIgnoreRepaint(true);
+            panel.add(canvas);
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.pack();
+            frame.setResizable(false);
+            frame.setVisible(true);
+            canvas.createBufferStrategy(1);
+            bufferStrategy = canvas.getBufferStrategy();
+            canvas.requestFocus();
+            g = (Graphics2D) bufferStrategy.getDrawGraphics();
+        }
     }
 
     public static void updateMaze() throws InterruptedException {
