@@ -25,7 +25,7 @@ public class CSMazeGame {
     static File file;
     static BufferedWriter br;
     //Values for clues and keys
-    static HashMap<String,String> holdKeys = new HashMap<>();
+    static HashMap<String, String> holdKeys = new HashMap<>();
     static boolean coordinateDecrypted = false;
     static AiObject mainAi;
     static Coord placeToGo = null;
@@ -58,6 +58,7 @@ public class CSMazeGame {
 
             }
             searchingDone = false;
+            coordinateDecrypted = false;
             if (x == 3) {
                 g.clearRect(0, 0, 1000, 1000);
                 g.setFont(new Font("TimesRoman", Font.PLAIN, 34));
@@ -219,10 +220,7 @@ public class CSMazeGame {
             updateFrontEnd();
             Thread.sleep(950);
         }
-        /*if (!visitStack.isEmpty()) {
-            currentMove = (Coord) visitStack.peek();
-        }*/
-        Thread.sleep(950);
+        if(keepGoingBack){Thread.sleep(950);}
         updateFrontEnd();
     }
 
@@ -237,6 +235,9 @@ public class CSMazeGame {
         boolean keepLoopRunning = true;
         boolean foundSomething = false;
         int currentValue = 0;
+        if (coordinateDecrypted && currentMove.rPos == mainAi.getDecryptedCoord().rPos && currentMove.cPos == mainAi.getDecryptedCoord().cPos) {
+            coordinateDecrypted = false;
+        }
         if (inBounds(realCurrentMove.rPos, realCurrentMove.cPos)) {
             currentValue = /*valueOfSpot;*/maze[currentMove.rPos][currentMove.cPos];
         }
@@ -287,7 +288,7 @@ public class CSMazeGame {
         }
         if (currentValue <= -4) {
             String valueOfKey = holdKeys.get(currentMove.rPos + "," + currentMove.cPos);
-            if (!valueOfKey.equals( "ugottriked")) {
+            if (!valueOfKey.equals("ugottriked")) {
                 if (valueOfKey.length() < 3) {
                     if (mainAi.addKey(valueOfKey)) {
                         placeToGo = mainAi.getDecryptedCoord();
@@ -302,27 +303,51 @@ public class CSMazeGame {
             }
         }
         int[][] holdPossibleMoves = new int[][]{{-1, 0}, {-1, -1}, {0, -1}, {1, -1}, {1, 0}, {1, 1}, {0, 1}, {-1, 1}};
-
+        ArrayList<Coord> holdPossibleLocs = new ArrayList<>();
+        ArrayList<Integer> locScore = new ArrayList<>();
         while (keepLoopRunning) {
-            //if(takeAction) {
             rMovement = holdPossibleMoves[a][0];
             cMovement = holdPossibleMoves[a][1];
-            //}
             int spaceValue = 1;
             if (inBounds(currentMove.rPos + rMovement, currentMove.cPos + cMovement)) {
                 spaceValue = maze[currentMove.rPos + rMovement][currentMove.cPos + cMovement];
             }
             if (inBounds(currentMove.rPos + rMovement, currentMove.cPos + cMovement) && spaceValue != 1 && spaceValue != -3 && spaceValue != -2/*&& spaceValue > -1*/) {
-                if (takeAction) {
-                    currentMove.rPos += rMovement;
-                    currentMove.cPos += cMovement;
+                if (!coordinateDecrypted) {
+                    if (takeAction) {
+                        currentMove.rPos += rMovement;
+                        currentMove.cPos += cMovement;
+                    }
+                    return true;
+                } else {
+                    holdPossibleLocs.add(new Coord(currentMove.rPos + rMovement, currentMove.cPos + cMovement));
                 }
-                return true;
             }
             if (a >= 7) {
                 keepLoopRunning = false;
             }
             a++;
+        }
+        if (coordinateDecrypted) {
+            int topScore = 0;
+            int topScorePos = 0;
+            int mainDistance = Math.abs(mainAi.getDecryptedCoord().rPos - currentMove.rPos) + Math.abs(mainAi.getDecryptedCoord().cPos - currentMove.cPos);
+            for (int x = 0; x < holdPossibleLocs.size(); x++) {
+                int currentDistance = Math.abs(mainAi.getDecryptedCoord().rPos - holdPossibleLocs.get(x).rPos) + Math.abs(mainAi.getDecryptedCoord().cPos - holdPossibleLocs.get(x).cPos);
+                int score = mainDistance - currentDistance;
+                if (score > topScore) {
+                    topScore = score;
+
+                    topScorePos = x;
+                }
+            }
+            if (holdPossibleLocs.size() > 0) {
+                if (takeAction) {
+                    currentMove.rPos = holdPossibleLocs.get(topScorePos).rPos;
+                    currentMove.cPos = holdPossibleLocs.get(topScorePos).cPos;
+                }
+                return true;
+            }
         }
         maze[realCurrentMove.rPos][realCurrentMove.cPos] = -2;
         return false;
