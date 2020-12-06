@@ -1,3 +1,4 @@
+import javax.print.attribute.HashDocAttributeSet;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferStrategy;
@@ -23,6 +24,11 @@ public class CSMazeGame {
     //Bufferedreader for Maze data created
     static File file;
     static BufferedWriter br;
+    //Values for clues and keys
+    static HashMap<String,String> holdKeys = new HashMap<>();
+    static boolean coordinateDecrypted = false;
+    static AiObject mainAi;
+    static Coord placeToGo = null;
 
     public static void main(String[] args) throws IOException, InterruptedException {
         Scanner scanner = new Scanner(System.in);
@@ -32,7 +38,7 @@ public class CSMazeGame {
         file = new File("AiData");
         br = new BufferedWriter(new FileWriter(file));
         //br.flush();
-        for(int x=1;x<=3;x++){
+        for (int x = 1; x <= 3; x++) {
             System.out.print("What is the random number you would like to use(1-8):");
             randomNumber = scanner.nextInt();
             initializeMaze(x);
@@ -52,21 +58,20 @@ public class CSMazeGame {
 
             }
             searchingDone = false;
-            if(x==3){
-                g.clearRect(0,0,1000,1000);
+            if (x == 3) {
+                g.clearRect(0, 0, 1000, 1000);
                 g.setFont(new Font("TimesRoman", Font.PLAIN, 34));
-                g.drawString("Mazes Completed",350,450);
+                g.drawString("Mazes Completed", 350, 450);
             }
             //br.write(String.valueOf(fullStack) + " " + fullStack.size());
             String entireStack = "";
-            for(int p=0;p<fullStack.size();p++){
+            for (int p = 0; p < fullStack.size(); p++) {
                 Coord tempCoord = fullStack.poll();
                 String finalString = "(" + tempCoord.rPos + "," + tempCoord.cPos + ")";
-                entireStack+=finalString;
+                entireStack += finalString;
             }
             br.write("# of steps:" + fullStack.size() + " Visited Path:" + entireStack);
             br.newLine();
-            System.out.println(String.valueOf(entireStack));
         }
         br.close();
     }
@@ -76,7 +81,7 @@ public class CSMazeGame {
     //Future block like helped blocks or harmful blocks will use the same scheme
     public static void initializeMaze(int mazeNum) throws IOException {
         File file;
-        file = mazeNum == 1 ? new File("Maze1") : mazeNum == 2? new File("Maze2"): new File("Maze3");
+        file = mazeNum == 1 ? new File("Maze1") : mazeNum == 2 ? new File("Maze2") : new File("Maze3");
         BufferedReader br = new BufferedReader(new FileReader(file));
         for (int y = 0; y < 20; y++) {
             for (int x = 0; x < 20; x++) {
@@ -87,33 +92,31 @@ public class CSMazeGame {
             }
         }
         for (int y = 0; y < 20; y++) {
-            for(int x=0;x<20;x++){
-                if(inBounds(y+1,x+1) && maze[y][x] == 0 && maze[y+1][x] == 0 && maze[y][x+1] == 0 && maze[y+1][x+1] == 0){
-                    if(randomNumber == 1){
+            for (int x = 0; x < 20; x++) {
+                if (inBounds(y + 1, x + 1) && maze[y][x] == 0 && maze[y + 1][x] == 0 && maze[y][x + 1] == 0 && maze[y + 1][x + 1] == 0) {
+                    if (randomNumber == 1) {
                         maze[y][x] = -3;
-                    }else if(randomNumber == 2){
-                        maze[y+1][x]=-3;
-                    }
-                    else if(randomNumber == 3){
-                        maze[y+1][x+1]=-3;
-                    }
-                    else if(randomNumber == 4){
-                        maze[y][x+1]=-3;
-                    }else{
-                        int whichOne = (int)(Math.random()*2);
+                    } else if (randomNumber == 2) {
+                        maze[y + 1][x] = -3;
+                    } else if (randomNumber == 3) {
+                        maze[y + 1][x + 1] = -3;
+                    } else if (randomNumber == 4) {
+                        maze[y][x + 1] = -3;
+                    } else {
+                        int whichOne = (int) (Math.random() * 2);
                         ArrayList<Coord> randomPlaces = new ArrayList<>();
-                        if(randomNumber == 5){
-                            randomPlaces.add(new Coord(y,x));
-                            randomPlaces.add(new Coord(y+1,x));
-                        }else if(randomNumber == 6){
-                            randomPlaces.add(new Coord(y+1,x));
-                            randomPlaces.add(new Coord(y+1,x+1));
-                        }else if(randomNumber == 7){
-                            randomPlaces.add(new Coord(y+1,x+1));
-                            randomPlaces.add(new Coord(y,x+1));
-                        }else if(randomNumber == 8){
-                            randomPlaces.add(new Coord(y,x+1));
-                            randomPlaces.add(new Coord(y,x));
+                        if (randomNumber == 5) {
+                            randomPlaces.add(new Coord(y, x));
+                            randomPlaces.add(new Coord(y + 1, x));
+                        } else if (randomNumber == 6) {
+                            randomPlaces.add(new Coord(y + 1, x));
+                            randomPlaces.add(new Coord(y + 1, x + 1));
+                        } else if (randomNumber == 7) {
+                            randomPlaces.add(new Coord(y + 1, x + 1));
+                            randomPlaces.add(new Coord(y, x + 1));
+                        } else if (randomNumber == 8) {
+                            randomPlaces.add(new Coord(y, x + 1));
+                            randomPlaces.add(new Coord(y, x));
                         }
                         maze[randomPlaces.get(whichOne).rPos][randomPlaces.get(whichOne).cPos] = -3;
                     }
@@ -124,13 +127,31 @@ public class CSMazeGame {
                 currentMove = new Coord(y, 19);
             }
         }
+        br.readLine();
+        String cluesString = br.readLine();
+        if (cluesString.length() > 1) {
+            String[] dataBlocks = cluesString.split(" ");
+            for (int x = 0; x < dataBlocks.length; x++) {
+                String[] partsOfData = dataBlocks[x].split(",");
+                holdKeys.put(partsOfData[0] + "," + partsOfData[1], partsOfData[2]);
+                System.out.println(partsOfData[2]);
+                if (partsOfData[2].equals("ugottriked")) {
+                    maze[Integer.valueOf(partsOfData[0])][Integer.valueOf(partsOfData[1])] = -4;
+                } else if (partsOfData[2].length() < 3) {
+                    maze[Integer.valueOf(partsOfData[0])][Integer.valueOf(partsOfData[1])] = -5;
+                } else {
+                    maze[Integer.valueOf(partsOfData[0])][Integer.valueOf(partsOfData[1])] = -6;
+                }
+                //  maze[Integer.valueOf(partsOfData[0])][Integer.valueOf(partsOfData[1])] = -4;
+            }
+        }
         //for(int y =0;y<20;y++){}
         visitStack = new Stack();
         fullStack = new LinkedList<>();
         visitStack.push(currentMove);
         //fullStack.add(currentMove);
         //Initialize front end
-        if(frame == null) {
+        if (frame == null) {
             frame = new JFrame("Maze Path Finder");
             JPanel panel = (JPanel) frame.getContentPane();
             panel.setPreferredSize(new Dimension(1000, 1000));
@@ -149,6 +170,7 @@ public class CSMazeGame {
             canvas.requestFocus();
             g = (Graphics2D) bufferStrategy.getDrawGraphics();
         }
+        mainAi = new AiObject();
     }
 
     public static void updateMaze() throws InterruptedException {
@@ -167,8 +189,8 @@ public class CSMazeGame {
         } else {
             // maze[currentMove.rPos][currentMove.cPos] = -2;
             currentMove = new Coord(currentMove.rPos, currentMove.cPos);
-            visitStack.push(new Coord(currentMove.rPos,currentMove.cPos));
-            fullStack.add(new Coord(currentMove.rPos,currentMove.cPos));
+            visitStack.push(new Coord(currentMove.rPos, currentMove.cPos));
+            fullStack.add(new Coord(currentMove.rPos, currentMove.cPos));
         }
         maze[oldCoord.rPos][oldCoord.cPos] = -2;
         //maze[currentMove.rPos][currentMove.cPos] = -1;
@@ -184,7 +206,7 @@ public class CSMazeGame {
                 visitStack.pop();
                 if (!visitStack.isEmpty()) {
                     Coord tempCoord = (Coord) visitStack.peek();
-                    currentMove = new Coord(tempCoord.rPos,tempCoord.cPos);//(Coord) visitStack.peek();
+                    currentMove = new Coord(tempCoord.rPos, tempCoord.cPos);//(Coord) visitStack.peek();
                     // maze[currentMove.rPos][currentMove.cPos] = -2;
                 }
             } else {
@@ -195,12 +217,12 @@ public class CSMazeGame {
                 keepGoingBack = false;
             }
             updateFrontEnd();
-            Thread.sleep(5/*950*/);
+            Thread.sleep(950);
         }
         /*if (!visitStack.isEmpty()) {
             currentMove = (Coord) visitStack.peek();
         }*/
-        Thread.sleep(5/*950*/);
+        Thread.sleep(950);
         updateFrontEnd();
     }
 
@@ -220,10 +242,10 @@ public class CSMazeGame {
         }
         if (currentValue > 1 || timesToGo > 0) {
             //keepLoopRunning = false;
-            if(timesToGo == 0){
+            if (timesToGo == 0) {
                 timesToGo = 2;
                 directionToGo = currentValue;
-            }else{
+            } else {
                 currentValue = directionToGo;
             }
             if (currentValue > 1 && currentValue < 6) {
@@ -263,6 +285,22 @@ public class CSMazeGame {
             currentMove.cPos += cMovement;
             return true;
         }
+        if (currentValue <= -4) {
+            String valueOfKey = holdKeys.get(currentMove.rPos + "," + currentMove.cPos);
+            if (!valueOfKey.equals( "ugottriked")) {
+                if (valueOfKey.length() < 3) {
+                    if (mainAi.addKey(valueOfKey)) {
+                        placeToGo = mainAi.getDecryptedCoord();
+                        coordinateDecrypted = true;
+                    }
+                } else {
+                    if (mainAi.addCoord(new Coord(Integer.valueOf(valueOfKey.split("\\.")[0]), Integer.valueOf(valueOfKey.split("\\.")[1])))) {
+                        placeToGo = mainAi.getDecryptedCoord();
+                        coordinateDecrypted = true;
+                    }
+                }
+            }
+        }
         int[][] holdPossibleMoves = new int[][]{{-1, 0}, {-1, -1}, {0, -1}, {1, -1}, {1, 0}, {1, 1}, {0, 1}, {-1, 1}};
 
         while (keepLoopRunning) {
@@ -274,7 +312,7 @@ public class CSMazeGame {
             if (inBounds(currentMove.rPos + rMovement, currentMove.cPos + cMovement)) {
                 spaceValue = maze[currentMove.rPos + rMovement][currentMove.cPos + cMovement];
             }
-            if (inBounds(currentMove.rPos + rMovement, currentMove.cPos + cMovement) && spaceValue != 1 && spaceValue > -1) {
+            if (inBounds(currentMove.rPos + rMovement, currentMove.cPos + cMovement) && spaceValue != 1 && spaceValue != -3 && spaceValue != -2/*&& spaceValue > -1*/) {
                 if (takeAction) {
                     currentMove.rPos += rMovement;
                     currentMove.cPos += cMovement;
@@ -316,8 +354,14 @@ public class CSMazeGame {
                     color = new Color(15, 200, 20);
                 } else if (mazeValue > 5) {
                     color = new Color(200, 15, 20);
-                }else if(mazeValue == -3){
-                    color = new Color(102,102,51);
+                } else if (mazeValue == -3) {
+                    color = new Color(102, 102, 51);
+                } else if (mazeValue == -4) {
+                    color = new Color(110, 110, 110);
+                } else if (mazeValue == -5) {
+                    color = new Color(0, 153, 51);
+                } else if (mazeValue == -6) {
+                    color = new Color(190, 220, 0);
                 }
                 if (y == currentMove.rPos && x == currentMove.cPos) {
                     color = new Color(20, 20, 220);
