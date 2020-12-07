@@ -130,7 +130,7 @@ public class CSMazeGame {
         }
         br.readLine();
         String cluesString = br.readLine();
-        if (cluesString.length() > 1) {
+        if (cluesString != null) {
             String[] dataBlocks = cluesString.split(" ");
             for (int x = 0; x < dataBlocks.length; x++) {
                 String[] partsOfData = dataBlocks[x].split(",");
@@ -220,7 +220,9 @@ public class CSMazeGame {
             updateFrontEnd();
             Thread.sleep(950);
         }
-        if(keepGoingBack){Thread.sleep(950);}
+        if (keepGoingBack) {
+            Thread.sleep(950);
+        }
         updateFrontEnd();
     }
 
@@ -286,17 +288,19 @@ public class CSMazeGame {
             currentMove.cPos += cMovement;
             return true;
         }
-        if (currentValue <= -4) {
+        if (currentValue <= -4 && currentValue > -7) {
             String valueOfKey = holdKeys.get(currentMove.rPos + "," + currentMove.cPos);
             if (!valueOfKey.equals("ugottriked")) {
                 if (valueOfKey.length() < 3) {
                     if (mainAi.addKey(valueOfKey)) {
                         placeToGo = mainAi.getDecryptedCoord();
+                        maze[placeToGo.rPos][placeToGo.cPos] = -7;
                         coordinateDecrypted = true;
                     }
                 } else {
                     if (mainAi.addCoord(new Coord(Integer.valueOf(valueOfKey.split("\\.")[0]), Integer.valueOf(valueOfKey.split("\\.")[1])))) {
                         placeToGo = mainAi.getDecryptedCoord();
+                        maze[placeToGo.rPos][placeToGo.cPos] = -7;
                         coordinateDecrypted = true;
                     }
                 }
@@ -337,7 +341,6 @@ public class CSMazeGame {
                 int score = mainDistance - currentDistance;
                 if (score > topScore) {
                     topScore = score;
-
                     topScorePos = x;
                 }
             }
@@ -363,10 +366,12 @@ public class CSMazeGame {
     }
 
     public static void updateFrontEnd() {
+        g.setColor(Color.WHITE);
+        g.drawRect(0,0,1000,1000);
         for (int y = 0; y < 20; y++) {
             for (int x = 0; x < 20; x++) {
                 int mazeValue = maze[y][x];
-                Color color = new Color(0, 0, 0);
+                Color color = new Color(255, 255, 255);
                 if (mazeValue == 1) {
                     color = new Color(0, 0, 0);
                 } else if (mazeValue == 0) {
@@ -386,14 +391,18 @@ public class CSMazeGame {
                 } else if (mazeValue == -5) {
                     color = new Color(0, 153, 51);
                 } else if (mazeValue == -6) {
-                    color = new Color(190, 220, 0);
+                    color = new Color(190, 210, 0);
                 }
                 if (y == currentMove.rPos && x == currentMove.cPos) {
                     color = new Color(20, 20, 220);
                 }
                 g.setColor(color);
                 g.fillRect(x * 50, y * 50, 50, 50);
-
+                if (mazeValue == -7) {
+                    Color tempColor = new Color(180, 0, 70);
+                    g.setColor(tempColor);
+                    g.fillOval(x * 50 + 10, y * 50 + 10, 30, 30);
+                }
             }
         }
     }
