@@ -29,6 +29,7 @@ public class CSMazeGame {
     static boolean coordinateDecrypted = false;
     static AiObject mainAi;
     static Coord placeToGo = null;
+    static ArrayList<Coord> holdDoors = new ArrayList<>();
 
     public static void main(String[] args) throws IOException, InterruptedException {
         Scanner scanner = new Scanner(System.in);
@@ -135,7 +136,6 @@ public class CSMazeGame {
             for (int x = 0; x < dataBlocks.length; x++) {
                 String[] partsOfData = dataBlocks[x].split(",");
                 holdKeys.put(partsOfData[0] + "," + partsOfData[1], partsOfData[2]);
-                System.out.println(partsOfData[2]);
                 if (partsOfData[2].equals("ugottriked")) {
                     maze[Integer.valueOf(partsOfData[0])][Integer.valueOf(partsOfData[1])] = -4;
                 } else if (partsOfData[2].length() < 3) {
@@ -144,6 +144,15 @@ public class CSMazeGame {
                     maze[Integer.valueOf(partsOfData[0])][Integer.valueOf(partsOfData[1])] = -6;
                 }
                 //  maze[Integer.valueOf(partsOfData[0])][Integer.valueOf(partsOfData[1])] = -4;
+            }
+        }
+       // br.readLine();
+        String doorString = br.readLine();
+        if(doorString != null){
+            String[] coordinateGroups = doorString.split(",");
+            for(int x=0;x<coordinateGroups.length;x++){
+                String[] coords = coordinateGroups[x].split("\\.");
+                holdDoors.add(new Coord(Integer.parseInt(coords[0]),Integer.parseInt(coords[1])));
             }
         }
         //for(int y =0;y<20;y++){}
@@ -295,12 +304,14 @@ public class CSMazeGame {
                     if (mainAi.addKey(valueOfKey)) {
                         placeToGo = mainAi.getDecryptedCoord();
                         maze[placeToGo.rPos][placeToGo.cPos] = -7;
+                        openDoors();
                         coordinateDecrypted = true;
                     }
                 } else {
                     if (mainAi.addCoord(new Coord(Integer.valueOf(valueOfKey.split("\\.")[0]), Integer.valueOf(valueOfKey.split("\\.")[1])))) {
                         placeToGo = mainAi.getDecryptedCoord();
                         maze[placeToGo.rPos][placeToGo.cPos] = -7;
+                        openDoors();
                         coordinateDecrypted = true;
                     }
                 }
@@ -363,6 +374,12 @@ public class CSMazeGame {
             return true;
         }
         return false;
+    }
+
+    public static void openDoors(){
+        for(int x=0;x<holdDoors.size();x++){
+            maze[holdDoors.get(x).rPos][holdDoors.get(x).cPos] = 0;
+        }
     }
 
     public static void updateFrontEnd() {
