@@ -383,6 +383,19 @@ public class CSMazeGame {
     }
 
     public static void updateFrontEnd() {
+      /*long startTime;
+        long currentTime;*/
+       /* currentTime = System.currentTimeMillis();
+        long timePassed = currentTime - startTime;
+        if (timePassed >= 1000) {
+            updateMaze();
+            updateFrontEnd();
+            if (*//*All options have been explored or Maze has been completed*//*
+                    false) {
+                searchingDone = true;
+            }
+            startTime = currentTime;
+        }*/
         g.setColor(Color.WHITE);
         g.drawRect(0,0,1000,1000);
         for (int y = 0; y < 20; y++) {
@@ -423,4 +436,5 @@ public class CSMazeGame {
             }
         }
     }
+    public void updateFaster(){}
 }
