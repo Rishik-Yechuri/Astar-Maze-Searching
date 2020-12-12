@@ -58,7 +58,7 @@ public class CSMazeGame {
                 //each cycle's execution time + sleeping is equal to 1000 millis
                 currentTime = System.currentTimeMillis();
                 long timePassed = currentTime - startTime;
-                if (timePassed >= 1000) {
+                if (timePassed >= 500) {
                     updateMaze();
                     updateFrontEnd();
                     /*if (*//*All options have been explored or Maze has been completed*//*
@@ -267,10 +267,10 @@ public class CSMazeGame {
             }
             //Update the UI and sleep
             updateFrontEnd();
-            Thread.sleep(950);
+            Thread.sleep(485);
         }
         if (keepGoingBack) {
-            Thread.sleep(950);
+            Thread.sleep(485);
         }
         updateFrontEnd();
     }
